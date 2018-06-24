@@ -1,0 +1,42 @@
+version: '3'
+services:
+  rocketchat:
+    image: rocketchat/rocket.chat:latest
+    container_name: rocketchat
+    restart: unless-stopped
+    environment:
+      # - PORT=3000
+      # - ROOT_URL=http://localhost:3000
+      - MONGO_URL=mongodb://mongo:27017/rocketchat
+    links:
+      - mongo
+    ports:
+      - 3000:3000
+  
+  mongo:
+    image: mongo:3.2
+    container_name: mongo
+    restart: unless-stopped
+    volumes:
+      - ./data/db:/data/db
+    command: mongod --smallfiles
+  
+  hubot:
+    build:
+      context: .
+      args:
+        - BOT_NAME=morikebot
+        - BOT_OWNER=morike
+        - BOT_DESC=Hubot with rocketbot adapter
+    container_name: hubot
+    restart: unless-stopped
+    volumes:
+      - ./data/bot_scripts:/home/hubot/rocketbot/scripts
+    links:
+      - rocketchat
+    environment:
+      - ROCKETCHAT_URL=http://rocketchat:3000
+      - ROCKETCHAT_ROOM=general
+      - ROCKETCHAT_USER=morikebot
+      - ROCKETCHAT_PASSWORD=morikebot
+      - ROCKETCHAT_AUTH=password
